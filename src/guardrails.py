@@ -37,3 +37,18 @@ class InputSanitizer:
         return text.strip()
 
 
+class SQLValidationError(ValueError):
+    """Raised when an SQL query fails safety or structural checks."""
+    pass
+
+def safe_sql(query: str) -> str:
+    q = query.strip()
+    
+    # Check for multiple statements (allow at most one trailing semicolon)
+    if q.count(';') > 1:
+        raise SQLValidationError("Multiple statements are not allowed.")
+        
+    if not q.lower().startswith('select'):
+        raise SQLValidationError("Only SELECT statements are allowed.")
+        
+    return q

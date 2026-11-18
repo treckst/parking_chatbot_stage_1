@@ -33,3 +33,5 @@ class SecutiryGuard:
         response = self.chain.invoke({"input": user_input})
 
         return response.model_dump()
+
+    

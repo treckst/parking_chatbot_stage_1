@@ -1,5 +1,5 @@
 import pytest
-from src.sanitizer import InputSanitizer
+from src.guardrails import InputSanitizer
 
 sanitizer = InputSanitizer()
 @pytest.mark.parametrize("value", [

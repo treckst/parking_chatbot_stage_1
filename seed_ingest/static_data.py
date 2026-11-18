@@ -5,7 +5,7 @@ from langchain_chroma import Chroma
 
 load_dotenv()
 
-from src.models import embedding
+from src.models_vector import embedding
 
 vectordb_path = Path(__file__).parent.parent
 
