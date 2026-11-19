@@ -1,7 +1,7 @@
 from typing import Optional, Literal, Annotated
 from pydantic import BaseModel, Field
 from langgraph.graph import add_messages
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import BaseMessage, HumanMessage
 from langchain_core.documents import Document
 from src.functions import reduce_list
 from datetime import datetime
@@ -11,6 +11,7 @@ class ReservationPeriod(BaseModel):
     end_date: str | None = Field(description="The end date with time to which the reservation is due", default=None)
 
 class UserState(BaseModel):
+    place: str | None = Field(default=None, description="Requested parking venue or address")
     name: str | None = Field(description="user name", default=None)
     car_number: str | None = Field(description="user car plate", default=None)
     reservation_period: ReservationPeriod = Field(
@@ -21,6 +22,7 @@ class UserState(BaseModel):
 
 #without approval_time for updating
 class UserInfoExtraction(BaseModel):
+        place: str | None = Field(default=None, description="Requested parking venue or address")
         name: str | None = None
         car_number: str | None = None
         reservation_period: ReservationPeriod = Field(
@@ -31,13 +33,15 @@ class MainState(BaseModel):
     messages: Annotated[list[BaseMessage], add_messages] = Field(default_factory=list)
     summary: str = ""
     queries: Annotated[list[str], reduce_list] = Field(default_factory=list)
-    current_message: str = ""
-    relevant_documents: Optional[list[Document]] = Field(default_factory=list)
+    human_messages: Annotated[list[HumanMessage], reduce_list] = Field(default_factory=list)
+    relevant_documents: Optional[list[str]] = Field(default_factory=list)
     user_info: UserState = Field(description="user's info for the reservation", default_factory=UserState)
     missing_info: list[str] = Field(default_factory=list)
+    reservation_question: str = ""
+    sql_calls: int = 0
+    run_query: str = ""
+    max_retrieves: int = 0
 
-class InputSchema(BaseModel):
-    query: str
 
 class UpgradedQuerySchema(BaseModel):
     finetuned_query: str = Field(description='upgraded query for search')
@@ -52,19 +56,8 @@ class RefinedQuerySchema(BaseModel):
 class GradeDocs(BaseModel):
     binary_score: Literal['yes', 'no'] = Field(description="Documents are relevant to the question, 'yes' or 'no'")
 
-class ReservationPeriod(BaseModel):
-    start_date: str = Field(description="The start date with time from which the reservation is starting", default=None)
-    end_date: str = Field(description="The end date with time to which the reservation is due", default=None)
-
 class DecideRetrieval(BaseModel):
     decision: Literal[True, False] = Field(description="True if the user message requires retrieval of information.")
 
-class SQLAgentState(BaseModel):
-    sql_calls: int
-    messages: Annotated[list[BaseMessage], add_messages] = Field(default_factory=list)
-
-class RetrievalState(BaseModel):
-    queries: Annotated[list[str], reduce_list] = Field(default_factory=list)
-    max_retrieves: int
-    relevant_documents: Optional[list[Document]] = Field(default_factory=list)
-    run_query: str = ""
+class IntentSchema(BaseModel):
+    intention: Literal['reservation','retrieve'] = Field(description="User's intention")

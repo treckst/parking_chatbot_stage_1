@@ -4,7 +4,7 @@ from pathlib import Path
 
 llm = ChatOpenAI(model='gpt-6-luna')
 
-answer_llm = ChatOpenAI(mode='gpt-6.2-sol', use_responses_api=True, temperature=0.6)
+response_llm = ChatOpenAI(model='gpt-6.2-sol', use_responses_api=True, temperature=0.6)
 
 embedding = OpenAIEmbeddings(model='text-embedding-3-small')
 def get_vector(path: Path):
