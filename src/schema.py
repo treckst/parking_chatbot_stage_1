@@ -1,9 +1,7 @@
 from typing import Optional, Literal, Annotated
 from pydantic import BaseModel, Field
 from langgraph.graph import add_messages
-from langchain_core.messages import BaseMessage, HumanMessage
-from langchain_core.documents import Document
-from src.functions import reduce_list
+from langchain_core.messages import BaseMessage
 from datetime import datetime
 
 class ReservationPeriod(BaseModel):
@@ -22,7 +20,7 @@ class UserState(BaseModel):
 
 #without approval_time for updating
 class UserInfoExtraction(BaseModel):
-        place: str | None = Field(default=None, description="Requested parking venue or address")
+        place: Literal['Port Łódź', 'Manufaktura', 'Galeria Łódzka', 'Nowa Sukcesja'] | None = Field(default=None, description="Name of the requested parking venue or None if not provided")
         name: str | None = None
         car_number: str | None = None
         reservation_period: ReservationPeriod = Field(
@@ -32,8 +30,6 @@ class UserInfoExtraction(BaseModel):
 class MainState(BaseModel):
     messages: Annotated[list[BaseMessage], add_messages] = Field(default_factory=list)
     summary: str = ""
-    queries: Annotated[list[str], reduce_list] = Field(default_factory=list)
-    human_messages: Annotated[list[HumanMessage], reduce_list] = Field(default_factory=list)
     relevant_documents: Optional[list[str]] = Field(default_factory=list)
     user_info: UserState = Field(description="user's info for the reservation", default_factory=UserState)
     missing_info: list[str] = Field(default_factory=list)
@@ -41,7 +37,11 @@ class MainState(BaseModel):
     sql_calls: int = 0
     run_query: str = ""
     max_retrieves: int = 0
-
+    wants_static_info: bool = False
+    wants_dynamic_info: bool = False
+    wants_reservation: bool = False
+    dynamic_question: str = ""
+    static_answer: str = ""
 
 class UpgradedQuerySchema(BaseModel):
     finetuned_query: str = Field(description='upgraded query for search')
@@ -60,4 +60,9 @@ class DecideRetrieval(BaseModel):
     decision: Literal[True, False] = Field(description="True if the user message requires retrieval of information.")
 
 class IntentSchema(BaseModel):
-    intention: Literal['reservation','retrieve'] = Field(description="User's intention")
+    static_info: bool = Field(description="True for static_info If user asks about general information, parking details, location, booking process")
+    dynamic_info: bool = Field(description="True if user asks about space availability, working hours, prices (the data that is frequently changes")
+    reservation: bool = Field(description="True if user does a reservation or provides a new userinfo for the reservation")
+    dynamic_question: str
+# class IntentSchema(BaseModel):
+#     intention: Literal['reservation','retrieve'] = Field(description="User's intention")

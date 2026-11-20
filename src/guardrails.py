@@ -26,6 +26,10 @@ class InputSanitizer:
         return False, None
 
     def sanitize(self, text: str) -> str:
+        if isinstance(text, list):
+            text = " ".join(
+            block.get("text", "") if isinstance(block, dict) else str(block)
+            for block in text)
         """Remove potentially dangerous content."""
         # Remove common injection delimiters
         text = re.sub(r"[-]{3,}", "", text)
