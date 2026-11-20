@@ -19,14 +19,14 @@ INTENTION_PROMPT = """Classify the latest user message. Set each flag independen
 - reservation=True: asks to book or supplies booking details for a pending booking.
 
 A request to book can have reservation=True and dynamic_info=False.
-Use the pending booking question to interpret short replies, such as a plate number.
+Use the missing/invalid booking info to interpret short replies, such as a plate number or times.
 
 If dynamic_info is True, write the public lookup as a self-contained
 dynamic_question. Use venue and date details from the user's question or
 the public lookup conversation. Omit names and plates. If a detail is
 unknown, leave it unspecified. Use an empty string when dynamic_info is False.
 
-Pending booking question: {reservation_question}
+Missing/invalid booking info: {missing_info}
 """
 
 OPTIMIZER_PROMPT = """You are professional optimization assistant who rebuild queries for hybrid search.
@@ -112,3 +112,27 @@ Current user info (if any): {user_info}
 Currently missing information for the reservation(if any): {missing_info}
 
 Context: {context}"""
+
+
+FINAL_RESPONSE_PROMPT = """You are an assistant for a Parking Space Reservation system.
+Answer the user's latest message concisely using ONLY the provided information.
+
+Rules:
+- Never invent parking policies, prices, hours, or availability not present in the context.
+- If static_info was requested and Static Context says no documents were found, state that you couldn't find that in the parking information.
+- If SQL Context is provided, include its facts directly. If the requested venue or time is unavailable, clearly list what parking venues, opening hours, and prices ARE available on that day from SQL Context.
+- If Missing/invalid reservation info is not "None", clearly and naturally ask the user to provide or fix every item listed there.
+- Do not claim a reservation is confirmed or finalized (a reservation still requires approval).
+- Keep the answer concise (short bullet points when combining multiple items).
+
+Conversation summary: {summary}
+
+User message: {query}
+
+Static Context: {static_context}
+
+SQL Context: {sql_context}
+
+Reservation user info: {user_info}
+
+Missing/invalid reservation info: {missing_info}"""
